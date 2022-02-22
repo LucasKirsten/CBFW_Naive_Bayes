@@ -2,9 +2,9 @@ __author__ = 'Lucas N. Kirsten'
 
 import numpy as np
 import pickle as pkl
-import multiprocessing
-from joblib import Parallel, delayed
-NUM_CORES = multiprocessing.cpu_count()
+#import multiprocessing
+#from joblib import Parallel, delayed
+#NUM_CORES = multiprocessing.cpu_count()
 
 from time import time
 
@@ -25,6 +25,8 @@ class CBFW(object):
         self.map_labels = {}
         self.priors = []
         self.features_posteriors = []
+        self.NIAA = []
+        self.NIAC = []
         self.W = []
         
     def fit(self, x, y):
@@ -48,13 +50,13 @@ class CBFW(object):
         priors = [(len(labels[labels==lb])+1/Nl)/(len(labels)+1) \
                       for lb in map_labels.keys()]
         
-        # compute features posteriors and feature-class correlation
-        init = time()
+        # compute features posteriors and feature-class correlation (relevance)
         features_posteriors = []
         IAC = np.zeros((Nf))
         for i in range(features.shape[-1]):
             feats = features[:, i]
             
+            # iterate over feature values and classes
             feat_post = np.zeros((len(map_features[i]), Nl))
             for val,vi in map_features[i].items():
                 for lb,li in map_labels.items():
@@ -73,44 +75,48 @@ class CBFW(object):
 
             features_posteriors.append(feat_post)
         
-        print(time()-init)
-        
-        # normalize feature-class correlation
+        # normalize relevance
         NIAC = IAC/np.mean(IAC)
+        self.NIAC = NIAC
 
-        # compute feature-feature correlation
-        init = time()
-        aij = []
+        # compute feature-feature correlation (redundancy)
+        aij = [] # all possible feature combinations
         for i in range(Nf):
             for j in range(i+1,Nf):
                 aij.append([i,j])
         
-        IAA = np.zeros(len(aij))
-        for k,(i,j) in enumerate(aij):
+        # iterate over feature combinations
+        IAA = np.zeros(Nf)
+        for i,j in aij:
+            # get feature values
             valsi = features[:,i]
             valsj = features[:,j]
-
+            
+            # iterate over possible feature values
             for vali in map_features[i]:
                 for valj in map_features[j]:
+                    # compute probabilities
                     p_aiaj = np.logical_and(valsi==vali, valsj==valj)
-                    p_aiaj = (np.count_nonzero(p_aiaj)+2/(len(valsi)+len(valsj)))/(len(p_aiaj)+1)
-                    p_ai = (len(valsi[valsi==vali])+1/len(valsi))/(len(map_features[i])+1)
-                    p_aj = (len(valsj[valsj==valj])+1/len(valsj))/(len(map_features[j])+1)
-
-                    IAA[k] += p_aiaj*np.log(p_aiaj/(p_ai*p_aj))
+                    p_aiaj = np.count_nonzero(p_aiaj)/len(p_aiaj)
+                    
+                    v_ai = valsi==vali
+                    p_ai = np.count_nonzero(v_ai)/len(v_ai)
+                    
+                    v_aj = valsj==valj
+                    p_aj = np.count_nonzero(v_aj)/len(v_aj)
+                    
+                    iaa = p_aiaj*np.log(p_aiaj/(p_ai*p_aj))
+                    IAA[i] += iaa
+                    IAA[j] += iaa
         
-            #with Parallel(n_jobs=NUM_CORES) as parallel:
-            #    _ = parallel(delayed(_compute_IAA)(vi,vali) )
-        
-        print(time()-init)
-        
-        # normalize feature-feature correlation
+        # normalize redundancy
         NIAA = IAA/np.mean(IAA)
+        self.NIAA = NIAA
         
         # mutual redundancy
         D = np.zeros(Nf)
         for i in range(Nf):
-            D[i] = NIAC[i] - np.mean(NIAA)
+            D[i] = NIAC[i] - np.mean(NIAA[i])
 
         # logistic sigmoid over mutual redundancy
         W = 1/(1+np.exp(-D))
