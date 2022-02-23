@@ -2,9 +2,6 @@ __author__ = 'Lucas N. Kirsten'
 
 import numpy as np
 import pickle as pkl
-#import multiprocessing
-#from joblib import Parallel, delayed
-#NUM_CORES = multiprocessing.cpu_count()
 
 from time import time
 
@@ -105,7 +102,7 @@ class CBFW(object):
                     v_aj = valsj==valj
                     p_aj = np.count_nonzero(v_aj)/len(v_aj)
                     
-                    iaa = p_aiaj*np.log(p_aiaj/(p_ai*p_aj))
+                    iaa = p_aiaj*np.log(p_aiaj/(p_ai*p_aj)+1e-6)
                     IAA[i] += iaa
                     IAA[j] += iaa
         
