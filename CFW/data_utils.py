@@ -16,8 +16,7 @@ def fill_mean(data, col_idx):
             data.iloc[:,col].fillna((data.iloc[:,col].mean()), inplace=True)
     return data
 
-''' Define a loading scheme for each of the tested datasets '''
-
+# define a generic loading scheme for the tested datasets
 def load_data(path, y_col, mode_idxs=[], mean_idxs=[], sep=',', remove_idxs=[]):
     data = pd.read_csv(path, header=None, sep=sep)
     data = data.replace('?', np.nan)
@@ -46,6 +45,7 @@ def load_data(path, y_col, mode_idxs=[], mean_idxs=[], sep=',', remove_idxs=[]):
     elif len(mean_idxs)>0 and len(mode_idxs)==0:
         mode_idxs = [i for i in range(len(x.columns)) if i not in mean_idxs]
         
+    # fill data according to each method
     x = fill_mode(x, mode_idxs)
     x = fill_mean(x, mean_idxs)
     

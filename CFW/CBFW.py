@@ -2,6 +2,7 @@ __author__ = 'Lucas N. Kirsten'
 
 import numpy as np
 import pickle as pkl
+from scipy.special import softmax
 
 from time import time
 
@@ -16,6 +17,7 @@ def save_model(path_save, model):
     with open(path_save, 'wb') as handle:
         pkl.dump(model, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
+# class for the classifier based on SKLEARN standarts
 class CBFW(object):
     def __init__(self):
         self.map_features = []
@@ -26,6 +28,7 @@ class CBFW(object):
         self.NIAC = []
         self.W = []
         
+    # fit data to the model
     def fit(self, x, y):
         features = np.array(x)
         labels = np.array(y)
@@ -126,7 +129,10 @@ class CBFW(object):
         self.features_posteriors = features_posteriors
         self.W = W
         
+    # make predictions on new data
     def predict(self, x, proba=False, naive=False):
+        # if proba=True returns the probabilities
+        # if naive=True perfoms predicitions using vanilla NB
         
         x = np.array(x)
         assert len(x.shape)==2, 'Invalid input shape!'
@@ -151,7 +157,11 @@ class CBFW(object):
                         pred_class[li] *= (1/len(self.features_posteriors[fi][feat]))**W[fi]
                     else:
                         pred_class[li] *= self.features_posteriors[fi][feat][li]**W[fi]
-
-            preds.append(self.labels_map[np.argmax(pred_class)])
+            
+            # if to store probabilities or the predicted class
+            if proba:
+                preds.append(softmax(pred_class))
+            else:
+                preds.append(self.labels_map[np.argmax(pred_class)])
             
         return np.array(preds)
