@@ -8,12 +8,12 @@ Run the following command to install the dependecies:
 pip install -r requirements.txt
 ```
 
-The CBFW classificator was implemented following the standards of (Scikit learn)[https://scikit-learn.org/]. For a example
+The CBFW classificator was implemented following the standards of [Scikit learn](https://scikit-learn.org/). For a example
 of usage please refer to the notebook ```example.ipynb```.
 
 ## Results
 
-### Accuracy results:
+### Accuracy results (%):
 
 | Dataset       | Paper | Mine  |
 | ------------- | ----- | ----- |
@@ -54,7 +54,7 @@ of usage please refer to the notebook ```example.ipynb```.
 | waveform-5000 | 83,11 | 82,10 |
 | zoo           | 95,96 | 96,45 |
 
-### Elapsed time:
+### Elapsed time (seconds):
 
 | Dataset       | Paper | Mine   |
 | ------------- | ----- | ------ |
